@@ -1,10 +1,18 @@
 *~
 _*
+._*
 *.o
 *.d
 *.asm
 *.sym
 *.img
+*.tex 
+*.dvi 
+*.idx 
+*.aux 
+*.log 
+*.ind 
+*.ilg
 vectors.S
 bootblock
 entryother
@@ -14,3 +22,4 @@ kernel
 kernelmemfs
 mkfs
 .gdbinit
+.DS_Store
