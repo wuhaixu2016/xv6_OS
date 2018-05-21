@@ -36,3 +36,10 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+// Create record file.
+extern void crecord(char*);
+// Write record file.
+extern void wrecord(char*, void*, int);
+// Read record file.
+extern void rrecord(char*, void*, int);

@@ -22,4 +22,9 @@ kernel
 kernelmemfs
 mkfs
 .gdbinit
+<<<<<<< HEAD
 .DS_Store
+.vscode
+=======
+.DS_Store
+>>>>>>> 9999efb... Add some rules in .gitignore

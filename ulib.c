@@ -103,3 +103,26 @@ memmove(void *vdst, void *vsrc, int n)
     *dst++ = *src++;
   return vdst;
 }
+
+void 
+crecord(char * directory) 
+{
+  int record = open(directory, O_CREATE);
+  close(record);
+}
+
+void 
+wrecord(char * directory, void * buffer, int size) 
+{
+  int record = open(directory, O_WRONLY);
+  write(record, buffer, size);
+  close(record);
+}
+
+void 
+rrecord(char * directory, void * buffer, int size) 
+{
+  int record = open(directory, O_RDONLY);
+  read(record, buffer, size);
+  close(record);
+}

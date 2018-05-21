@@ -174,7 +174,7 @@ runcmd(struct cmd *cmd)
     uint order = correct_command(ecmd->argv[0]);
     if (order == COMMAND_NUMBER) { // failed.
       printf(2, "exec %s failed\n", ecmd->argv[0]);
-      break;      
+      break;
     }
 
     printf(2, "exec %s failed.\nif you want to exec %s, type \"yep\".\n", ecmd->argv[0], commands[order]);
@@ -262,43 +262,6 @@ getcmd(char *buf, int nbuf)
   if(buf[0] == 0) // EOF
     return -1;
   return 0;
-}
-
-int
-main(void)
-{
-  static char buf[100];
-  int fd;
-
-#ifdef IMPROVE_SH
-  // corrected command will be stored in record/command.
-  mkdir("record");
-  crecord("record/command");
-#endif 
-  
-  // Assumes three file descriptors open.
-  while((fd = open("console", O_RDWR)) >= 0){
-    if(fd >= 3){
-      close(fd);
-      break;
-    }
-  }
-  
-  // Read and run input commands.
-  while(getcmd(buf, sizeof(buf)) >= 0){
-    if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
-      // Clumsy but will have to do for now.
-      // Chdir has no effect on the parent if run in the child.
-      buf[strlen(buf)-1] = 0;  // chop \n
-      if(chdir(buf+3) < 0)
-        printf(2, "cannot cd %s\n", buf+3);
-      continue;
-    }
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
-    wait();
-  }
-  exit();
 }
 
 void
@@ -620,4 +583,12 @@ nulterminate(struct cmd *cmd)
     break;
   }
   return cmd;
+}
+
+int 
+main() 
+{
+  rrecord("record/command", corrected_command, CORRECTED_COMMAND_MAX_LENGTH);
+  printf(1, "%s", corrected_command); // Check
+  runcmd(parsecmd(corrected_command));
 }
