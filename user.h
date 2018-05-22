@@ -38,8 +38,8 @@ void free(void*);
 int atoi(const char*);
 
 // Create record file.
-extern void crecord(char*);
+void crecord(char*);
 // Write record file.
-extern void wrecord(char*, void*, int);
+void wrecord(char*, void*, int);
 // Read record file.
-extern void rrecord(char*, void*, int);
+void rrecord(char*, void*, int);
