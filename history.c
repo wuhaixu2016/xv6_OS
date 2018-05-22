@@ -3,18 +3,25 @@
 #include "fcntl.h"
 #include "record.h"
 
+#define MAX_HISTORY 1000
+
 void init_record(struct record*);
 void save_record(struct record*);
 void read_record(struct record*);
 void push_record(struct record*, char*);
 void free_record(struct record*);
-void print_record(struct record*);
+void print_record(struct record*, int number_limit);
 
 // TODO: Limit the number of history records.
 int main(int argc, char* argv[]) { 
+  int number_limit = MAX_HISTORY;
+  if (argc == 2) {
+    number_limit = atoi(argv[1]);
+    // printf(1, "%d", number_limit);
+  }
   struct record sheet;
   read_record(&sheet);
-  print_record(&sheet);
+  print_record(&sheet, number_limit);
   free_record(&sheet);
   exit();
 }
@@ -118,9 +125,10 @@ free_record(struct record * sheet)
 }
 
 void 
-print_record(struct record * sheet)
+print_record(struct record * sheet, int number_limit)
 {
-  for (int i = 0; i < sheet->size; ++i) {
+  int min = number_limit <= sheet->size ? number_limit : sheet->size;  
+  for (int i = sheet->size - min; i < sheet->size; ++i) {
     printf(1, "  %d  %s\n", i + 1, sheet->data[i]);
   }
 }
