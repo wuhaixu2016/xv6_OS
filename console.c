@@ -346,3 +346,18 @@ consoleinit(void)
   ioapicenable(IRQ_KBD, 0);
 }
 
+#ifdef IMPROVE_CONSOLE
+
+void 
+clear(void)
+{
+  int pos = 0;
+  memset(crt, 0, sizeof(crt[0]) * (25 * 80));
+  outb(CRTPORT, 14);
+  outb(CRTPORT+1, pos>>8);
+  outb(CRTPORT, 15);
+  outb(CRTPORT+1, pos);
+  crt[pos] = (' ') | 0x0700;
+}
+
+#endif //x IMPROVE_CONSOLE

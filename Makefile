@@ -21,6 +21,7 @@ OBJS = \
 	syscall.o\
 	sysfile.o\
 	sysproc.o\
+	sysconsole.o\
 	timer.o\
 	trapasm.o\
 	trap.o\
@@ -173,6 +174,7 @@ UPROGS=\
 	_yep\
 	_history\
 	_shell\
+	_clear\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
