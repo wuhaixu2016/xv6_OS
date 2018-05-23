@@ -1,5 +1,3 @@
-// Shell.
-
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
@@ -61,13 +59,14 @@ struct cmd *parsecmd(char*);
 
 #ifdef IMPROVE_SH
 
-#define COMMAND_NUMBER 20
+#define COMMAND_NUMBER 22
 #define COMMAND_MAX_LENGTH 32
 
 char commands[COMMAND_NUMBER][COMMAND_MAX_LENGTH] = {
-  "cat", "echo", "forktest", "grep", "init",
-	"kill", "ln", "ls", "mkdir", "rm",
-	"sh", "stressfs", "usertests", "wc", "zombie"
+  "cat",  "echo",     "forktest",   "grep",   "init",
+	"kill", "ln",       "ls",         "mkdir",  "rm",
+	"sh",   "stressfs", "usertests",  "wc",     "zombie",
+  "history",  "shell"
 };
 
 #define LEVENSHTEIN_BUFFER_SIZE COMMAND_MAX_LENGTH
@@ -86,17 +85,17 @@ levenshtein(char *a, char *b)
   char code;
 
   if (a == b) {
-      return 0;
+    return 0;
   }
   if (a_length == 0) {
-      return 1;
+    return 1;
   }
   if (b_length == 0) {
-      return 1;
+    return 1;
   }
   while (a_index < a_length) {
-      cache[a_index] = a_index + 1;
-      a_index++;
+    cache[a_index] = a_index + 1;
+    a_index++;
   }
   while (b_index < b_length) {
     code = b[b_index];
@@ -142,12 +141,43 @@ correct_command(char * wrong_command)
 
 char corrected_command[CORRECTED_COMMAND_MAX_LENGTH] = "";
 
+// Determine if ecmd->argv[0] is an abbreviation. 
+// For example, his* is an abbreviation of history.
+// Return COMMAND_NUMBER when there are no matching commands.
+// Rerurn the order of command in commands[] when there is a best matching command.
+uint 
+check_command(char * raw_command) 
+{
+  uint raw_command_length = strlen(raw_command);
+  if (raw_command_length < 2 || COMMAND_MAX_LENGTH < raw_command_length) {
+    return COMMAND_NUMBER;
+  }
+  // abbreviation sign '*'
+  if (raw_command[raw_command_length - 1] != '*') {
+    return COMMAND_NUMBER;
+  }
+  for (uint i = 0; i < COMMAND_NUMBER; ++i) {
+    uint current_command_length = strlen(commands[i]);
+    int found = 1;
+    for (uint j = 0; j < current_command_length && j < raw_command_length - 1; j++) {
+      if (commands[i][j] != raw_command[j]) {
+        found = 0;
+        break;
+      }
+    }
+    if (found) {
+      return i;
+    }
+  }
+  return COMMAND_NUMBER;
+}
+
 void init_record(struct record*);
 void save_record(struct record*);
 void read_record(struct record*);
 void push_record(struct record*, char*);
 void free_record(struct record*);
-void print_record(struct record*);
+void print_record(struct record*, int);
 
 #endif //x IMPROVE_SH
 
@@ -173,12 +203,40 @@ runcmd(struct cmd *cmd)
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
       exit();
-    exec(ecmd->argv[0], ecmd->argv);
-    
+
 #ifdef IMPROVE_SH
 
+    // Determine if ecmd->argv[0] is an abbreviation. 
+    // For example, his* is an abbreviation of history.
+    uint order = check_command(ecmd->argv[0]);
+    if (order != COMMAND_NUMBER) {
+      int offset = 0;
+      strcpy(corrected_command + offset, commands[order]);
+      offset += strlen(commands[order]);
+      corrected_command[offset++] = ' ';
+      for (int i = 1; i < MAXARGS; ++i) {
+        if (ecmd->argv[i] != 0) {
+          strcpy(corrected_command + offset, ecmd->argv[i]);
+          offset += strlen(ecmd->argv[i]);
+          corrected_command[offset++] = ' ';
+        }
+      }
+      corrected_command[offset - 1] = 0;
+      printf(1, "%s\n", corrected_command);
+
+      struct record sheet;
+      read_record(&sheet);
+      push_record(&sheet, corrected_command);
+      save_record(&sheet);
+
+      exec(commands[order], ecmd->argv);
+    }
+    else {
+      exec(ecmd->argv[0], ecmd->argv);
+    }
+
     // Try to correct command.
-    uint order = correct_command(ecmd->argv[0]);
+    order = correct_command(ecmd->argv[0]);
     if (order == COMMAND_NUMBER) { // failed.
       printf(2, "exec %s failed\n", ecmd->argv[0]);
       break;      
@@ -203,6 +261,7 @@ runcmd(struct cmd *cmd)
 
 #else // IMPROVE_SH
     
+    exec(ecmd->argv[0], ecmd->argv);
     printf(2, "exec %s failed\n", ecmd->argv[0]);
     
 #endif //x IMPROVE_SH
@@ -594,6 +653,8 @@ nulterminate(struct cmd *cmd)
 
 #ifdef IMPROVE_SH
 
+#define MAX_HISTORY 1000
+
 char * buffer = 0;
 
 void 
@@ -656,7 +717,8 @@ read_record(struct record * sheet)
   free(buffer);
 }
 
-void expand_sheet(struct record * sheet) {
+void 
+expand_sheet(struct record * sheet) {
   if (sheet->size < sheet->capacity) {
     return;
   }
@@ -693,17 +755,17 @@ free_record(struct record * sheet)
 }
 
 void 
-print_record(struct record * sheet)
+print_record(struct record * sheet, int number_limit)
 {
-  for (int i = 0; i < sheet->size; ++i) {
+  int min = number_limit <= sheet->size ? number_limit : sheet->size;  
+  for (int i = sheet->size - min; i < sheet->size; ++i) {
     printf(1, "  %d  %s\n", i + 1, sheet->data[i]);
   }
 }
 
 #endif //x IMPROVE_SH
-
-int 
-main() 
+int
+main(void)
 {
   exit();
 }
