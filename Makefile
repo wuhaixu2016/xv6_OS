@@ -172,6 +172,7 @@ UPROGS=\
 	_zombie\
 	_yep\
 	_history\
+	_shell\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

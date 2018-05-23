@@ -14,6 +14,20 @@
 #include "proc.h"
 #include "x86.h"
 
+#define IMPROVE_CONSOLE
+
+#ifdef IMPROVE_CONSOLE
+
+// #include "kbd.h"
+#define KEY_UP          0xE2
+#define KEY_DN          0xE3
+#define KEY_LF          0xE4
+#define KEY_RT          0xE5
+
+#define LINE(pos) ((int)(pos) / 80)
+
+#endif //x IMPROVE_CONSOLE
+
 static void consputc(int);
 
 static int panicked = 0;
@@ -137,13 +151,50 @@ cgaputc(int c)
   outb(CRTPORT, 15);
   pos |= inb(CRTPORT+1);
 
+#ifdef IMPROVE_CONSOLE
+
+  switch(c) {
+  case '\n':
+    pos += 80 - pos % 80;
+    break;
+  
+  case BACKSPACE:
+    if (LINE(pos) * 80 + 2 < pos) {
+      --pos;
+      crt[pos] = (' ') | 0x0700;
+    }
+    break;
+  
+  case KEY_RT:
+    if (pos < 24*80 - 1 && pos < (LINE(pos) + 1) * 80) {
+      ++pos;
+    }
+    break;
+  
+  case KEY_LF:
+    if (LINE(pos) * 80 + 2 < pos) {
+      --pos;
+    }
+    break;
+  
+  default:
+    if (c != KEY_UP && c != KEY_DN) {
+      crt[pos++] = (c&0xff) | 0x0700; // black on white
+    }
+    break;
+  }
+
+#else
+
   if(c == '\n')
     pos += 80 - pos%80;
   else if(c == BACKSPACE){
     if(pos > 0) --pos;
   } else
     crt[pos++] = (c&0xff) | 0x0700;  // black on white
-  
+
+#endif //x IMPROVE_CONSOLE
+
   if((pos/80) >= 24){  // Scroll up.
     memmove(crt, crt+80, sizeof(crt[0])*23*80);
     pos -= 80;
@@ -154,7 +205,11 @@ cgaputc(int c)
   outb(CRTPORT+1, pos>>8);
   outb(CRTPORT, 15);
   outb(CRTPORT+1, pos);
+  
+#ifdef IMPROVE_CONSOLE
+#else
   crt[pos] = ' ' | 0x0700;
+#endif //x IMPROVE_CONSOLE
 }
 
 void
