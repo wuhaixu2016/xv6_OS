@@ -72,6 +72,8 @@ int UD_cnt; // +: up, -: down
 char str[PAR_SIZE];//record string
 int strLen;
 
+int delnum; //delete num 
+
 int
 lines(struct par* para)
 {
@@ -126,7 +128,7 @@ void
 wash_buf()
 {
   strLen = 0;
-
+  delnum = 0;
   int i;
   int ch;
   LR_cnt = 0;
@@ -148,6 +150,9 @@ wash_buf()
       case KEY_UP:
         ++UD_cnt;
         break;
+      case '@':
+      	delnum++;
+      	break;
       case 'e':
       case 's':
       case 'q':
@@ -446,6 +451,7 @@ edit_mode()
     switch (buf[0] & 0xff) {
       case KEY_LEFT:
       case KEY_DOWN:
+      case '@':
         wash_buf();
         if (LR_cnt > 0) {
           if (LR_cnt > edit_index) {
@@ -465,13 +471,20 @@ edit_mode()
           current_par = new_par;
           edit_index = 0;
         }
+        if(delnum > 0)
+        {
+          memmove(trans, current_par->content+edit_index-LR_cnt, current_par->size - edit_index+LR_cnt);
+          memmove(current_par->content+edit_index-LR_cnt-delnum, trans, current_par->size-edit_index+LR_cnt);
+		  edit_index -= delnum;
+		  current_par->size -= delnum;	
+        }
         break;
       case KEY_ESC:
         mode = VIS_MODE;
         update_output();
         return;
       default:
-        //insert data 
+        //insert data putc
         memmove(trans, current_par->content+edit_index, current_par->size-edit_index);
         printf(1,current_par->content);
         memmove(current_par->content+edit_index+buf_cnt, trans, current_par->size-edit_index);
