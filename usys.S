@@ -31,3 +31,4 @@ SYSCALL(sleep)
 SYSCALL(uptime)
 
 SYSCALL(clear)
+SYSCALL(rename)

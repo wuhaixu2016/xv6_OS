@@ -59,7 +59,7 @@ struct cmd *parsecmd(char*);
 
 #ifdef IMPROVE_SH
 
-#define COMMAND_NUMBER 27
+#define COMMAND_NUMBER 28
 #define COMMAND_MAX_LENGTH 32
 
 char commands[COMMAND_NUMBER][COMMAND_MAX_LENGTH] = {
@@ -67,7 +67,7 @@ char commands[COMMAND_NUMBER][COMMAND_MAX_LENGTH] = {
 	"kill", "ln",       "ls",         "mkdir",  "rm",
 	"sh",   "stressfs", "usertests",  "wc",     "zombie",
   "history", "shell", "clear",      "cp",     "mv",
-  "edit", "eval"
+  "edit",    "eval",  "rename"
 };
 
 #define LEVENSHTEIN_BUFFER_SIZE COMMAND_MAX_LENGTH
