@@ -177,7 +177,8 @@ UPROGS=\
 	_clear\
 	_cp\
 	_mv\
-	_edit
+	_edit\
+	_eval\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
