@@ -4,22 +4,21 @@
 #include "fcntl.h"
 #include "fs.h"
 
-#define MAX 256
+#define MAX 1000
 
-void ls(char *path);
-char *fmtname(char *path);
+void cp(char *path);
 
 int 
 main(int argc, char *argv[])
 {
   if(argc != 3)
   {
-      printf(1, "wrong! please input again\n");
-      exit();
+    printf(1, "wrong! please input again\n");
+    exit();
   }
 
-  int fd_source = open(argv[1], O_RDONLY);
-  if(fd_source == -1)
+  int source_file = open(argv[1], O_RDONLY);
+  if(source_file == -1)
   {
       printf(1, "open source file failed\n");
       exit();
@@ -27,18 +26,18 @@ main(int argc, char *argv[])
 
   //judge souce_file is folder
   struct stat st;
-  fstat(fd_source, &st);
+  fstat(source_file, &st);
   if(st.type == T_DIR)
   {
       printf(1, "source_file is a directory\n");
-      ls(argv[1]);
+      cp(argv[1]);
       printf(1, "the program can't open the file in the directory.\n");
       printf(1, "you have to copy them one by one.\n");
       exit();
   }
 
-  char com[128] = {};
-  strcpy(com, argv[2]);
+  char c[MAX] = {};
+  strcpy(c, argv[2]);
   int len1 = strlen(argv[1]);
   int len2 = strlen(argv[2]);
   if(argv[2][len2-1] == '/')
@@ -52,12 +51,12 @@ main(int argc, char *argv[])
           }
       }
       i++;
-      strcpy(&com[len2], &argv[1][i]);
+      strcpy(&c[len2], &argv[1][i]);
   }
 
   //
-  int fd_des = open(com, O_WRONLY|O_CREATE);
-  if(fd_des == -1)
+  int destination_file = open(c, O_WRONLY|O_CREATE);
+  if(destination_file == -1)
   {
       printf(1, "open destination file failed\n");
       exit();
@@ -66,19 +65,18 @@ main(int argc, char *argv[])
   //copy
   char ch[MAX] = {};
   int len = 0;
-  while((len = read(fd_source, ch, MAX)) > 0)
+  while((len = read(source_file, ch, MAX)) > 0)
   {
-      write(fd_des, ch, len);
+      write(destination_file, ch, len);
   }
-  close(fd_source);
-  close(fd_des);
+  close(source_file);
+  close(destination_file);
   exit();
 }
 
 char* 
-fmtname(char *path)
+p(char *path)
 {
-  static char ch[DIRSIZ+1];
   char *c;
   for(c = path+strlen(path); c >= path && *c != '/'; c--)
   {
@@ -90,33 +88,34 @@ fmtname(char *path)
   {
       return c;
   }
+  static char ch[DIRSIZ+1];
   memmove(ch, c, strlen(c));
   memset(ch+strlen(c), ' ', DIRSIZ-strlen(c));
   return ch;
 }
 
 void 
-ls(char *path)
+cp(char *path)
 {
-  char ch[512], *c;
-  int fd;
+  char ch[MAX], *c;
+  int file;
   struct dirent di;
   struct stat st;
-  if((fd = open(path, 0)) < 0)
+  if((file = open(path, 0)) < 0)
   {
     printf(2, "can't open %s.\n", path);
     return;
   }
-  if(fstat(fd, &st) < 0)
+  if(fstat(file, &st) < 0)
   {
     printf(2, "can't stat %s. \n", path);
-    close(fd);
+    close(file);
     return;
   }
   switch(st.type)
   {
     case T_FILE:
-    printf(1, "name = %s, type = file, size = %d\n", fmtname(path), st.size);
+    printf(1, "name = %s, type = file\n", p(path));
     break;
 
     case T_DIR:
@@ -129,7 +128,7 @@ ls(char *path)
     c = ch + strlen(ch);
     *c++ = '/';
 
-    while(read(fd, &di, sizeof(di)) == sizeof(di))
+    while(read(file, &di, sizeof(di)) == sizeof(di))
     {
       if(di.inum == 0)
         continue;
@@ -140,9 +139,9 @@ ls(char *path)
         printf(1, "can't stat &s\n", ch);
         continue;
       }
-      printf(1, "name = %s, type = directory, size = %d\n", fmtname(ch), st.size);
+      printf(1, "name = %s, type = directory\n", p(ch));
     }
     break;
   }
-  close(fd);
+  close(file);
 }
