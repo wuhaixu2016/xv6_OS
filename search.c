@@ -35,19 +35,7 @@ char* get(char *filePath, char *fileName)
 {
   int len = strlen(filePath);
   int j, i = 0;
-  for(i = 0; i < len; i++)
-  {
-    for(j = i; j < len; j++)
-    {
-      if((filePath[j]=='.') || (filePath[j]=='/'))
-        break;
-    }
-    if(j == len)
-      break;
-  }
-  if(i == len)
-    return ".";
-  for(j = 0; i < len-i; j++)
+  for(j = 0; j < len-i; j++)
     fileName[j] = filePath[j+i];
   fileName[len-i]=0;
   return fileName;
@@ -61,7 +49,7 @@ void SearchFile(char *filePath, char *fileName)
     printf(2, "sorry, can't open %s\n", filePath);
     return;
   }
-  char ch[512], *c;
+  char ch[MAX], *c;
   struct dirent di;
   struct stat st;
   if(fstat(file,&st) < 0)
@@ -80,12 +68,11 @@ void SearchFile(char *filePath, char *fileName)
         printf(1,"path:%s size:%d\n", fileName, filePath);
 
       }
-      if((st.type == 1) && (compare(get(ch, name),".")!=0)&&(compare(get(ch, name),"..")!=0))
+      if((compare(get(ch, name)," ")!=0))
         SearchFile(get(filePath,name),fileName);
       break;
-    }
 
-    case T_DIR:
+    case T_DIR:  
     if(strlen(filePath)+1+DIRSIZ+1 > sizeof(ch))
     {
       printf(1, "path too long\n");
@@ -109,7 +96,7 @@ void SearchFile(char *filePath, char *fileName)
       char name[MAX];
       if(compare(get(ch,name),fileName)==0)
         printf(1,"path:%s size:%d\n",fileName,ch);
-      if((st.type == 1) && (compare(get(ch, name),".")!=0)&&(compare(get(ch, name),"..")!=0))
+      if((compare(get(ch, name),".")!=0))
       {
         SearchFile(fileName,get(filePath,name));
       }
@@ -117,4 +104,5 @@ void SearchFile(char *filePath, char *fileName)
     break;
   }
   close(file);
+  }
 }
