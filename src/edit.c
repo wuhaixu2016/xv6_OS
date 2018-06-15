@@ -2,6 +2,7 @@
 #include "stat.h"
 #include "user.h"
 #include "fcntl.h"
+#include "color.h"
 #include "x86.h"
 
 #define MAX_LINE_NUM 24
@@ -34,6 +35,90 @@ struct par
   int size;
   char content[PAR_SIZE];
 };
+
+struct codeType
+{
+  int start[100];
+  int len[100];
+};
+
+
+static char reserveWord[32][10] = {
+    "auto", "break", "case", "char", "const", "continue",
+    "default", "do", "double", "else", "enum", "extern",
+    "float", "for", "goto", "if", "int", "long",
+    "register", "return", "short", "signed", "sizeof", "static",
+    "struct", "switch", "typedef", "union", "unsigned", "void",
+    "volatile", "while"
+};
+
+int findReserveWord(char s[10])
+{
+  int type ;
+  for(int j = 0; j<32; j++)
+  {
+    type = 1;
+    for(int i = 0; i<10; i++)
+    {
+      if(reserveWord[j][i] != s[i])
+        type = 0;
+    }
+    if(type == 1)
+    {
+      return 1;
+    }
+  }
+  return 0;
+}
+// to do 
+// return array
+struct codeType setCodeColor(struct par* tmp)
+{
+  struct codeType a;
+  for(int i = 0; i < 100; i++)
+  {
+    a.start[i] = -1;
+    a.len[i] = -1;
+  }
+  for(int i = 0; i < tmp->size; i++)
+  {
+      int j;
+      char s[10] = {'\0'};
+      for(j = i; j < tmp->size && j < i+10; j++)
+      {
+          if((tmp->content)[j] == ' ')
+          {
+            break;
+          }
+          s[j-i] = (tmp->content)[j];
+          // if(j >= i + 10)
+          // {
+          //   for(; (tmp->content)[i] != ' ' && i < tmp->size; ++i);
+          //   break;
+          // }
+      }      
+    
+      if(findReserveWord(s))
+      {
+        for(int k = 0; k < 100 ; k++)
+        {
+          if(a.start[k] == -1)
+          {
+            a.start[k] = i;
+            a.len[k] = j-i+1;
+            break;
+          }
+        }
+      }
+      for(int k = 0; k<10; k++)
+      {
+        s[k] = '\0';
+      }
+      for(; (tmp->content)[i] != ' ' && i < tmp->size; ++i);
+  }
+
+  return a;
+}
 
 struct par*
 add_back(struct par* front)
@@ -259,50 +344,61 @@ output(char* str, int length)
     putc(move_r);
   }
 }
+// to do 
+// number>10
+int
+getNumber(int number)
+{
+  char c;
+  c = '0' + number%10;
+  return c;
+}
+
 
 void
 m_clear()
 {
   int i;  
-  for (i = 0; i < MAX_LINE_NUM + 2; ++i) {
-    putc(move_d);
-  }
+
   for (i = 0; i < MAX_LINE_NUM + 2; ++i) {
     putc('\n');
   }
+}
+
+int
+is_highlight(struct codeType tmp, int i)
+{
+  for(int k = 0; tmp.start[k] != -1; k++)
+  {
+    if(i >= tmp.start[k] && (i < tmp.start[k] + tmp.len[k]))
+    return 1;
+  }
+  return 0;
 }
 
 void
 update_output()
 {
   // clear up the screen
+  int lineSignal = combineColor(RED, BLACK);
+  int ordinary = combineColor(WHITE, BLACK);
+  int code = combineColor(YELLOW, BLACK);
   int i;
-  int j;
   m_clear();
 
   // print mode info
   switch(mode) {
     case VIS_MODE:
       printf(1, "VISUAL MODE");
-      for (j = 0; j < 11; ++j) {
-        putc(move_l);
-      }
       putc('\n');
       break;
-    case EDT_MODE:
-      printf(1, "EDIT MODE");
-      for (j = 0; j < 9; ++j) {
-        putc(move_l);
+    case EDT_MODE:{
+      printf(1, "DRAFT\n");
       }
       putc('\n');
       break;
     default:
       break;
-  }
-
-  // move to the top
-  for (i = 0; i < MAX_LINE_NUM + 2; ++i) {
-    putc(move_u);
   }
 
   // print out the content
@@ -313,33 +409,67 @@ update_output()
   int cnt;
   cnt = 0;
   while(1) {
+    setconsole((cnt+4)*80, getNumber(cnt), lineSignal, -1, 2);
     if (print_par == 0) {
       break;
     }
-    if (cnt != 0) {
-      putc('\n');
-    }
+/*    for (i = 0; i < print_par->size; ++i) {
+      setconsole((cnt+4)*80+(i+2), (print_par->content)[i], ordinary, -1, 2);
+    }*/
+    struct codeType tmp = setCodeColor(print_par);
+    
     for (i = 0; i < print_par->size; ++i) {
-      putc((print_par->content)[i]);
+      if(is_highlight(tmp, i) == 0)
+      {
+        setconsole((cnt+4)*80+(i+2), (print_par->content)[i], ordinary, -1, 2);
+      }
+      else
+      {
+        setconsole((cnt+4)*80+(i+2), (print_par->content)[i], code, -1, 2);
+      }
     }
+    // else
+    // {
+    //   for (i = 0; i < tmp.start[0]-1; ++i) {
+    //     setconsole((cnt+4)*80+(i+2), (print_par->content)[i], ordinary, -1, 2); 
+    //     }
+    //   for(int k = 0; k < tobeColoredNum; k++)
+    //   {
+    //     for(int j = tmp.start[k]; j < tmp.len[k]; j++){
+    //       setconsole((cnt+4)*80+(j + 2), (print_par->content)[j], code, -1, 2); 
+    //     }
+    //     for(int j = tmp.start[k] + tmp.len[k] + 1; j < tmp.start[k + 1] - tmp.start[k] - tmp.len[k]; j++)
+    //     {
+    //       setconsole((cnt+4)*80+(i+2), (print_par->content)[i], ordinary, -1, 2);  
+    //     }
+    //   }
+    // }
+    
+    
+    // else
+    // {
+      
+    //   for(int k = 0; k < tobeColoredNum; k++)
+    //   {
+    //     for(int j = 0; j < tmp.len[k]; j++){
+    //       setconsole((cnt+4)*80+(j+tmp.start[k]+2), (print_par->content)[j+tmp.start[k]], code, -1, 2); 
+    //     }
+    //     for (i = tmp.start[k] + tmp.len[k]; i < tmp.start[k + 1] ; ++i) {
+    //       setconsole((cnt+4)*80+(i+2), (print_par->content)[i], ordinary, -1, 2); 
+    //     }
+
+      
+    //   for (i = tmp.start[k] + tmp.len[k]; i < print_par->size; ++i) {
+    //   setconsole((cnt+4)*80+(i+2), (print_par->content)[i], ordinary, -1, 2); 
+    //   }
+    //}
+    //else
+    //{
+      
+    //}
+    //}
+
     ++cnt;
-    print_par = print_par->next;
-  }
-
-  // move the cursor from anywhere to left top
-  for (i = 0; i < MAX_LINE_NUM + 1; ++i) {
-    putc(move_u);
-  }
-  for (i = 0; i < 81; ++i) {
-    putc(move_l);
-  }
-
-  // move the cursor to the current par
-  print_par = screen_par;
-  while(print_par != current_par) {
-    for (i = 0; i < lines(print_par); ++i) {
-      putc(move_d);
-    }
     print_par = print_par->next;
   }
 
@@ -521,13 +651,6 @@ main(int argc, char *argv[])
   }
 
   int fd;
-
-  // while((fd = open("console", O_RDWR)) >= 0){
-  //   if(fd >= 3){
-  //     close(fd);
-  //     break;
-  //   }
-  // }
 
   file_name = argv[1];
   fd = open_file(file_name);
