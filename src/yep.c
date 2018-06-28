@@ -59,14 +59,15 @@ struct cmd *parsecmd(char*);
 
 #ifdef IMPROVE_SH
 
-#define COMMAND_NUMBER 23
+#define COMMAND_NUMBER 28
 #define COMMAND_MAX_LENGTH 32
 
 char commands[COMMAND_NUMBER][COMMAND_MAX_LENGTH] = {
   "cat",  "echo",     "forktest",   "grep",   "init",
 	"kill", "ln",       "ls",         "mkdir",  "rm",
 	"sh",   "stressfs", "usertests",  "wc",     "zombie",
-  "history", "shell", "clear"
+  "history", "shell", "clear",      "cp",     "mv",
+  "edit",    "eval",  "rename"
 };
 
 #define LEVENSHTEIN_BUFFER_SIZE COMMAND_MAX_LENGTH
@@ -765,63 +766,25 @@ print_record(struct record * sheet, int number_limit)
 
 #endif //x IMPROVE_SH
 
-int
-main(void)
+int 
+main(void) 
 {
-  static char buf[100];
-  int fd;
-
-#ifdef IMPROVE_SH
-  mkdir("record");
-  // Corrected command will be stored in record/command.
-  crecord("record/command");
-  // History infomation will be stored in record/history_*.
-  crecord("record/history_size");
-  crecord("record/history_capacity");
-  crecord("record/history_data");
-  // Init history recorder.
   struct record sheet;
-  init_record(&sheet);
-  save_record(&sheet);
-#endif 
-  
-  // Assumes three file descriptors open.
-  while((fd = open("console", O_RDWR)) >= 0){
-    if(fd >= 3){
-      close(fd);
+  read_record(&sheet);
+
+  rrecord("record/command", corrected_command, CORRECTED_COMMAND_MAX_LENGTH);
+  printf(1, "%s", corrected_command); // Check
+  for (int i = 0; i < CORRECTED_COMMAND_MAX_LENGTH; i++) {
+    if (corrected_command[i] == '\n') {
+      corrected_command[i] = 0;
+      push_record(&sheet, corrected_command);
+      save_record(&sheet);
+      corrected_command[i] = '\n';
       break;
     }
   }
-  
-  // Read and run input commands.
-  while(getcmd(buf, sizeof(buf)) >= 0){
+  // Leak.
 
-#ifdef IMPROVE_SH 
-    for (int i = 0; i < 100; ++i) {
-      if (buf[i] == '\n') {
-        buf[i] = 0;
-        // Record command to history recorder.
-        // Leak.
-        read_record(&sheet);
-        push_record(&sheet, buf);
-        save_record(&sheet);
-        buf[i] = '\n';
-        break;
-      }
-    }
-#endif //x IMPROVE_SH
-
-    if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
-      // Clumsy but will have to do for now.
-      // Chdir has no effect on the parent if run in the child.
-      buf[strlen(buf)-1] = 0;  // chop \n
-      if(chdir(buf+3) < 0)
-        printf(2, "cannot cd %s\n", buf+3);
-      continue;
-    }
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
-    wait();
-  }  
+  runcmd(parsecmd(corrected_command));
   exit();
 }

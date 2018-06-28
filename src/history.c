@@ -59,14 +59,15 @@ struct cmd *parsecmd(char*);
 
 #ifdef IMPROVE_SH
 
-#define COMMAND_NUMBER 23
+#define COMMAND_NUMBER 28
 #define COMMAND_MAX_LENGTH 32
 
 char commands[COMMAND_NUMBER][COMMAND_MAX_LENGTH] = {
   "cat",  "echo",     "forktest",   "grep",   "init",
 	"kill", "ln",       "ls",         "mkdir",  "rm",
 	"sh",   "stressfs", "usertests",  "wc",     "zombie",
-  "history", "shell", "clear"
+  "history", "shell", "clear",      "cp",     "mv",
+  "edit",    "eval",  "rename"
 };
 
 #define LEVENSHTEIN_BUFFER_SIZE COMMAND_MAX_LENGTH
@@ -764,8 +765,32 @@ print_record(struct record * sheet, int number_limit)
 }
 
 #endif //x IMPROVE_SH
-int
-main(void)
-{
+
+int 
+main(int argc, char* argv[]) {
+  struct record sheet;
+  read_record(&sheet); 
+  int number_limit = MAX_HISTORY;
+  if (argc == 2) {
+    if (argv[1][0] == '!') { // Exec history command.
+      int order = atoi(argv[1] + 1);
+      if (order < 1 || sheet.size <= order) { // Reject sheet.size == order 
+        printf(2, "exec history !%d failed.\n", order);
+        free_record(&sheet);
+      } else {
+        push_record(&sheet, sheet.data[order - 1]);
+        save_record(&sheet);
+        free_record(&sheet);
+        printf(1, "%s\n", sheet.data[order - 1]);
+        runcmd(parsecmd(sheet.data[order - 1]));
+      }
+      exit();
+    }
+    else {
+      number_limit = atoi(argv[1]) ;
+    }
+  }
+  print_record(&sheet, number_limit);
+  free_record(&sheet);
   exit();
 }

@@ -22,3 +22,5 @@
 #define SYS_close  21
 
 #define SYS_clear  22
+#define SYS_rename 23
+#define SYS_setconsole 24

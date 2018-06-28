@@ -59,14 +59,15 @@ struct cmd *parsecmd(char*);
 
 #ifdef IMPROVE_SH
 
-#define COMMAND_NUMBER 23
+#define COMMAND_NUMBER 28
 #define COMMAND_MAX_LENGTH 32
 
 char commands[COMMAND_NUMBER][COMMAND_MAX_LENGTH] = {
   "cat",  "echo",     "forktest",   "grep",   "init",
 	"kill", "ln",       "ls",         "mkdir",  "rm",
 	"sh",   "stressfs", "usertests",  "wc",     "zombie",
-  "history", "shell", "clear"
+  "history", "shell", "clear",      "cp",     "mv",
+  "edit",    "eval",  "rename"
 };
 
 #define LEVENSHTEIN_BUFFER_SIZE COMMAND_MAX_LENGTH
@@ -764,26 +765,8 @@ print_record(struct record * sheet, int number_limit)
 }
 
 #endif //x IMPROVE_SH
-
-int 
-main(void) 
+int
+main(void)
 {
-  struct record sheet;
-  read_record(&sheet);
-
-  rrecord("record/command", corrected_command, CORRECTED_COMMAND_MAX_LENGTH);
-  printf(1, "%s", corrected_command); // Check
-  for (int i = 0; i < CORRECTED_COMMAND_MAX_LENGTH; i++) {
-    if (corrected_command[i] == '\n') {
-      corrected_command[i] = 0;
-      push_record(&sheet, corrected_command);
-      save_record(&sheet);
-      corrected_command[i] = '\n';
-      break;
-    }
-  }
-  // Leak.
-
-  runcmd(parsecmd(corrected_command));
   exit();
 }

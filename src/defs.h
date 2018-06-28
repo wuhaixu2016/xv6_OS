@@ -20,6 +20,7 @@ void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 void            clear(void);
+int setconsole(int pos, int ch, int color, int cursor, int mode);
 
 // exec.c
 int             exec(char*, char**);

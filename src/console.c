@@ -30,6 +30,7 @@
 
 static void consputc(int);
 
+
 static int panicked = 0;
 
 static struct {
@@ -347,6 +348,34 @@ consoleinit(void)
 }
 
 #ifdef IMPROVE_CONSOLE
+//Edit console output
+
+int 
+sys_setconsole(void)
+{
+    int pos, ch, color, cursor, mode;
+    if (argint(0, &pos) < 0 || argint(1, &ch) < 0)
+        return -1;
+    if (argint(2, &color) < 0)
+        color = 0x0700;
+    if (argint(3, &cursor) < 0)
+        cursor = -1;
+    if (argint(4, &mode) < 0)
+        mode = 0;
+    if (0 <= pos && pos < 80 * 25){//屏幕输出范围在[0~80 x 25)
+        crt[pos] = (ch & 0xff) | color;
+    }
+    if (cursor >= 0){
+        outb(CRTPORT, 14);
+        outb(CRTPORT+1, cursor >> 8);
+        outb(CRTPORT, 15);
+        outb(CRTPORT+1, cursor);
+    }
+    if (mode < 0)
+        mode = 0;
+    //consolemode = mode;
+    return 0;
+}
 
 void 
 clear(void)

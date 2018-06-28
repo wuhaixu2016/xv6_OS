@@ -24,6 +24,8 @@ int sleep(int);
 int uptime(void);
 
 void clear(void);
+int setconsole(int, int, int, int, int);
+int rename(char*, char*);
 
 // ulib.c
 int stat(char*, struct stat*);
