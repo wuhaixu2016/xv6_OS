@@ -176,17 +176,12 @@ UPROGS=\
 	_shell\
 	_clear\
 	_cp\
-<<<<<<< HEAD:Makefile
-	_edit
-	
-=======
 	_mv\
 	_edit\
 	_eval\
 	_rename\
 	_search\
 
->>>>>>> 8b05e79212900ab6a05aa19902884549a364dc0f:src/Makefile
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
