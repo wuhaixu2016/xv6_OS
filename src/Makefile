@@ -182,7 +182,6 @@ UPROGS=\
 	_rename\
 	_search\
 
-
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
