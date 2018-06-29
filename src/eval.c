@@ -11,7 +11,6 @@
 #define _CHAR_CACHE_SIZE _CACHE_SIZE
 #define _INT_CACHE_SIZE _CACHE_SIZE
 
-// 浮点数缓存
 float _FLOAT_CACHE[_FLOAT_CACHE_SIZE];
 
 unsigned int _float_cache_pointer = 0;
@@ -33,7 +32,6 @@ float * FloatCacheTop() {
     return &_FLOAT_CACHE[_float_cache_pointer - 1];
 }
 
-// 字符型缓存
 char _CHAR_CACHE[_CHAR_CACHE_SIZE];
 
 unsigned int _char_cache_pointer = 0;
@@ -55,7 +53,6 @@ char * CharCacheTop() {
     return &_CHAR_CACHE[_char_cache_pointer - 1];
 }
 
-// 整形数缓存
 int _INT_CACHE[_INT_CACHE_SIZE];
 
 unsigned int _int_cache_pointer = 0;
@@ -77,14 +74,11 @@ int * IntCacheTop() {
     return &_INT_CACHE[_int_cache_pointer - 1];
 }
 
-// 清除所有缓存
 void ResetCache() {
     ResetFloatCache();
     ResetCharCache();
     ResetIntCache();
 }
-
-// 基本数据结构，变长向量
 
 typedef void * CVectorElementType;
 
@@ -147,7 +141,7 @@ CVectorElementType CVectorRemove(CVector vector, unsigned int rank) {
     return element_to_remove;
 }
 
-void CVectorInsert(CVector vector, unsigned int rank, CVectorElementType element) { // rank 允许 [0, size]
+void CVectorInsert(CVector vector, unsigned int rank, CVectorElementType element) {
     CVectorExpand(vector);
     vector->size++;
     for (unsigned int i = vector->size; rank < i; i--) {
@@ -172,8 +166,6 @@ CVectorElementType CVectorGet(CVector vector, unsigned rank) {
 void CVectorSet(CVector vector, unsigned rank, CVectorElementType element) {
     vector->data[rank] = element;
 }
-
-// 基于向量扩充的数据结构
 
 typedef CVectorElementType CStackElementType;
 
@@ -213,11 +205,8 @@ CStackElementType CStackTop(CStack stack) {
     return CVectorGet(stack->data, CStackSize(stack) - 1);
 }
 
-// 计算器
-
 #define _RPN_MAX_LENGTH 2000
 
-// 逆波兰表达式输出
 char RPN[_RPN_MAX_LENGTH] = "";
 
 unsigned int _rpn_pointer = 0;
@@ -239,15 +228,10 @@ char * RpnPush(char c) {
     return &RPN[_rpn_pointer - 1];
 }
 
-
-// 运算符总数
 #define N_OPTR 9 
 
-// 运算符集合
-// 加、减、乘、除、乘方、阶乘、左括号、右括号、起始符与终止符
 typedef enum { ADD, SUB, MUL, DIV, POW, FAC, L_P, R_P, EOE } Operator;
 
-// 运算符优先等级 [栈顶] [当前]
 const char OPERATION_PRIORITY[N_OPTR][N_OPTR] = {
     { '>',   '>',   '<',   '<',   '<',   '<',   '<',   '>',   '>' },
     { '>',   '>',   '<',   '<',   '<',   '<',   '<',   '>',   '>' },
@@ -260,22 +244,22 @@ const char OPERATION_PRIORITY[N_OPTR][N_OPTR] = {
     { '<',   '<',   '<',   '<',   '<',   '<',   '<',   ' ',   '=' }
 };
 
-Operator Optr2Rank(char optr) { // 由运算符转译出编号
+Operator Optr2Rank(char optr) {
     switch (optr) {
-    case '+': return ADD; // 加
-    case '-': return SUB; // 减
-    case '*': return MUL; // 乘
-    case '/': return DIV; // 除
-    case '^': return POW; // 乘方
-    case '!': return FAC; // 阶乘
-    case '(': return L_P; // 左括号
-    case ')': return R_P; // 右括号
-    case '\0': return EOE; // 起始符与终止符
-    default: exit(); // 未知运算符
+    case '+': return ADD; 
+    case '-': return SUB; 
+    case '*': return MUL; 
+    case '/': return DIV; 
+    case '^': return POW; 
+    case '!': return FAC; 
+    case '(': return L_P; 
+    case ')': return R_P; 
+    case '\0': return EOE; 
+    default: exit();
     }
 }
 
-char OrderBetween(char operation1, char operation2) { // 比较两个运算符之间的优先级
+char OrderBetween(char operation1, char operation2) {
     return OPERATION_PRIORITY[Optr2Rank(operation1)][Optr2Rank(operation2)];
 }
 
@@ -301,7 +285,7 @@ int Pow(int number, int n) {
     return result;
 }
 
-float Calculate2(float a, char optr, float b) { // 执行二元运算
+float Calculate2(float a, char optr, float b) {
     switch (optr) {
     case '+': return a + b;
     case '-': return a - b;
@@ -312,7 +296,7 @@ float Calculate2(float a, char optr, float b) { // 执行二元运算
     }
 }
 
-float Calculate1(char optr, float b) { // 执行一元运算
+float Calculate1(char optr, float b) {
     switch (optr) {
     case '!': return (float)Factorial((int)b);
     default: exit();
@@ -480,7 +464,7 @@ char * FloatToString(char * outstr, float value, int places) {
 void AppendOperand2Rpn(float operand) {
     char * buffer = (char *)malloc(100 * sizeof(char));
     if (operand != (float)(int)operand) {
-        FloatToString(buffer, operand, 2); // 2位精度
+        FloatToString(buffer, operand, 2);
     }
     else {
         FloatToString(buffer, operand, 0);
@@ -496,7 +480,6 @@ void AppendOperator2Rpn(char optr) {
     RpnPush(optr);
 }
 
-// 对（已剔除白空格的）表达式 posi 求值，并转换为逆波兰式 RPN
 float Evaluate(char * posi) {
     ResetRpn();
     ResetCache();
@@ -532,7 +515,7 @@ float Evaluate(char * posi) {
                 }
                 break;
             }
-            default: exit(); // 逢语法错误，不做处理直接退出
+            default: exit();
             }
         }
     }
